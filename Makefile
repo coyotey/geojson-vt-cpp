@@ -27,7 +27,7 @@ run-debug: debug
 test: config.gypi
 	deps/run_gyp geojsonvt.gyp -Iconfig.gypi --depth=. -Goutput_dir=. --generator-output=./build -f make
 	make -C build test
-	build/$(BUILDTYPE)/test
+	build/$(BUILDTYPE)/test --gtest_filter=GeoJSON*
 
 .PHONY: xproj
 xproj: config.gypi

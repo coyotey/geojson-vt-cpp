@@ -20,6 +20,7 @@
       ],
 
       'sources': [
+        'include/mapbox/geojsonvt/geojson.hpp',
         'include/mapbox/geojsonvt/geojsonvt.hpp',
         'include/mapbox/geojsonvt/geojsonvt_clip.hpp',
         'include/mapbox/geojsonvt/geojsonvt_convert.hpp',
@@ -28,6 +29,7 @@
         'include/mapbox/geojsonvt/geojsonvt_types.hpp',
         'include/mapbox/geojsonvt/geojsonvt_util.hpp',
         'include/mapbox/geojsonvt/geojsonvt_wrap.hpp',
+        'src/geojson.cpp',
         'src/geojsonvt.cpp',
         'src/geojsonvt_clip.cpp',
         'src/geojsonvt_convert.cpp',
@@ -109,6 +111,7 @@
             'test/test_clip.cpp',
             'test/test_full.cpp',
             'test/test_simplify.cpp',
+            'test/test_geojson.cpp',
           ],
 
           'variables': {

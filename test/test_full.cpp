@@ -168,11 +168,14 @@ TEST_P(TileTest, Tiles) {
 
     const auto actual = genTiles(loadFile(params.inputFile), params.maxZoom, params.maxPoints);
     const auto expected = parseJSONTiles(loadFile(params.expectedFile));
+    fprintf(stderr, "actual: %lu  expected: %lu\n", actual.size(), expected.size());
 
     ASSERT_EQ(expected, actual);
 }
 
 INSTANTIATE_TEST_CASE_P(Full, TileTest, ::testing::ValuesIn(std::vector<Arguments>{
     { "test/fixtures/us-states.json", "test/fixtures/us-states-tiles.json", 7, 200 },
-    { "test/fixtures/dateline.json", "test/fixtures/dateline-tiles.json", 7, 200 },
+    { "test/fixtures/dateline.json", "test/fixtures/dateline-tiles.json", 5, 100000 },
+    { "test/fixtures/feature.json", "test/fixtures/feature-tiles.json", 5, 100000 },
+    { "test/fixtures/collection.json", "test/fixtures/collection-tiles.json", 5, 100000 },
 }));

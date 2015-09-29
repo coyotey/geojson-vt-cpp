@@ -29,6 +29,16 @@ std::vector<ProjectedFeature> Convert::convert(const JSDocument& data, double to
     } else if (std::string(data["type"].GetString()) == "Feature") {
         // single geometry or a geometry collection
         convertFeature(features, data, tolerance);
+    } else if (std::string(data["type"].GetString()) == "GeometryCollection") {
+        // convertFeature(features, data, tolerance);
+        if (data.HasMember("geometries")) {
+            const JSValue& rawGeometries = data["geometries"];
+            if (rawGeometries.IsArray()) {
+                for (rapidjson::SizeType i = 0; i < rawGeometries.Size(); ++i) {
+                    convertFeature(features, rawGeometries[i], tolerance);
+                }
+            }
+        }
     } else {
 
         /* In this case, we want to pass the entire JSON document as the
