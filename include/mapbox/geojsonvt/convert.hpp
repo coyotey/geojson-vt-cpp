@@ -10,8 +10,7 @@ namespace mapbox {
 namespace geojsonvt {
 namespace detail {
 
-inline vt_point project(const mapbox::geometry::point<double>& p,
-                        __attribute__((unused)) const double tolerance) {
+inline vt_point project(const geometry::point<double>& p) {
     const double sine = std::sin(p.y * M_PI / 180);
     const double x = p.x / 360 + 0.5;
     const double y =
@@ -19,115 +18,30 @@ inline vt_point project(const mapbox::geometry::point<double>& p,
     return { x, y, 0.0 };
 }
 
-inline vt_line_string project(const mapbox::geometry::line_string<double>& points,
-                              const double tolerance) {
-    vt_line_string result;
-    const size_t len = points.size();
-
-    if (len == 0)
-        return result;
-
-    result.reserve(len);
-
-    for (const auto& p : points) {
-        result.push_back(project(p, tolerance));
-    }
-
-    for (size_t i = 0; i < len - 1; ++i) {
-        const auto& a = result[i];
-        const auto& b = result[i + 1];
-        // use Manhattan distance instead of Euclidian to avoid expensive square root computation
-        result.dist += std::abs(b.x - a.x) + std::abs(b.y - a.y);
-    }
-
-    simplify(result, tolerance);
-
-    return result;
-}
-
-inline vt_linear_ring project(const mapbox::geometry::linear_ring<double>& ring,
-                              const double tolerance) {
-    vt_linear_ring result;
-    const size_t len = ring.size();
-
-    if (len == 0)
-        return result;
-
-    result.reserve(len);
-
-    for (const auto& p : ring) {
-        result.push_back(project(p, tolerance));
-    }
-
-    double area = 0.0;
-
-    for (size_t i = 0; i < len - 1; ++i) {
-        const auto& a = result[i];
-        const auto& b = result[i + 1];
-        area += a.x * b.y - b.x * a.y;
-    }
-    result.area = std::abs(area / 2);
-
-    simplify(result, tolerance);
-
-    return result;
-}
-
-inline vt_multi_point project(const mapbox::geometry::multi_point<double>& points,
-                              const double tolerance) {
-    vt_multi_point result;
-    result.reserve(points.size());
-    for (const auto& p : points) {
-        result.push_back(project(p, tolerance));
-    }
-    return result;
-}
-
-inline vt_multi_line_string project(const mapbox::geometry::multi_line_string<double>& lines,
-                                    const double tolerance) {
-    vt_multi_line_string result;
-    result.reserve(lines.size());
-
-    for (const auto& line : lines) {
-        result.push_back(project(line, tolerance));
-    }
-    return result;
-}
-
-inline vt_polygon project(const mapbox::geometry::polygon<double>& rings, const double tolerance) {
-    vt_polygon result;
-    result.reserve(rings.size());
-
-    for (const auto& ring : rings) {
-        result.push_back(project(ring, tolerance));
-    }
-    return result;
-}
-
-inline vt_multi_polygon project(const mapbox::geometry::multi_polygon<double>& polygons,
-                                const double tolerance) {
-    vt_multi_polygon result;
-    result.reserve(polygons.size());
-
-    for (const auto& polygon : polygons) {
-        result.push_back(project(polygon, tolerance));
-    }
-    return result;
-}
-
-inline vt_geometry project(const mapbox::geometry::geometry<double>& geom, const double tolerance) {
-    return mapbox::geometry::geometry<double>::visit(
-        geom, [&](const auto& g) { return vt_geometry(project(g, tolerance)); });
-}
-
-inline vt_features convert(const mapbox::geometry::feature_collection<double>& features,
+inline vt_features convert(const geometry::feature_collection<double>& features,
                            const double tolerance) {
     vt_features projected;
     projected.reserve(features.size());
 
-    for (const auto& feature : features) {
-        projected.emplace_back(project(feature.geometry, tolerance), feature.properties);
+    for (const auto& f : features) {
+        vt_feature feature {
+            transform<vt_geometry>(f.geometry, project),
+            f.properties;
+        };
+
+        for_each_line_string(feature.geometry, [&] (vt_line_string& line) {
+            line.calculate_dist();
+            simplify(line, tolerance);
+        });
+
+        for_each_linear_ring(feature.geometry, [&] (vt_linear_ring& ring) {
+            ring.calculate_area();
+            simplify(ring, tolerance);
+        }
+
+        projected.push_back(std::move(feature));
     }
+
     return projected;
 }
 

@@ -54,10 +54,30 @@ using vt_multi_point = std::vector<vt_point>;
 
 struct vt_line_string : std::vector<vt_point> {
     double dist = 0.0; // line length
+
+    void calculate_dist() {
+        dist = 0.0;
+        for (size_t i = 0; i < size() - 1; ++i) {
+            const auto& a = (*this)[i];
+            const auto& b = (*this)[i + 1];
+            // use Manhattan distance instead of Euclidian to avoid expensive square root computation
+            dist += std::abs(b.x - a.x) + std::abs(b.y - a.y);
+        }
+    }
 };
 
 struct vt_linear_ring : std::vector<vt_point> {
     double area = 0.0; // polygon ring area
+
+    void calculate_area() {
+        area = 0.0;
+        for (size_t i = 0; i < size() - 1; ++i) {
+            const auto& a = (*this)[i];
+            const auto& b = (*this)[i + 1];
+            area += a.x * b.y - b.x * a.y;
+        }
+        area = std::abs(area / 2);
+    }
 };
 
 using vt_multi_line_string = std::vector<vt_line_string>;
